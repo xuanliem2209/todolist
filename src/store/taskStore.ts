@@ -66,8 +66,20 @@ export const useTaskStore = create<TaskState>()(
         
         try {
           const { data: { user }, error: userError } = await supabase.auth.getUser();
-          if (userError || !user) {
+          if (userError) {
+            console.error('Auth error:', userError);
+            throw new Error('Authentication failed');
+          }
+          
+          if (!user) {
             throw new Error('Not authenticated');
+          }
+
+          // Verify user session is valid
+          const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+          if (sessionError || !session) {
+            console.error('Session error:', sessionError);
+            throw new Error('Invalid session');
           }
 
           // First check if user has any projects, if not create a default one
@@ -225,8 +237,20 @@ export const useTaskStore = create<TaskState>()(
         
         try {
           const { data: { user }, error: userError } = await supabase.auth.getUser();
-          if (userError || !user) {
+          if (userError) {
+            console.error('Auth error:', userError);
+            throw new Error('Authentication failed');
+          }
+          
+          if (!user) {
             throw new Error('Not authenticated');
+          }
+
+          // Verify user session is valid
+          const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+          if (sessionError || !session) {
+            console.error('Session error:', sessionError);
+            throw new Error('Invalid session');
           }
 
           // Fetch projects with members

@@ -54,6 +54,9 @@ export const useAuthStore = create<AuthState>()(
             if (error.message.includes('Invalid login credentials')) {
               throw new Error('Invalid email or password. Please check your credentials.');
             }
+            if (error.message.includes('Email not confirmed')) {
+              throw new Error('Please check your email and click the confirmation link to verify your account before signing in.');
+            }
             throw new Error(error.message);
           }
 
@@ -108,6 +111,17 @@ export const useAuthStore = create<AuthState>()(
           }
 
           if (data.user) {
+            // Check if email confirmation is required
+            if (!data.session) {
+              set({ 
+                isLoading: false,
+                error: null 
+              });
+              // Show success message for email confirmation
+              alert('Account created successfully! Please check your email and click the confirmation link to verify your account before signing in.');
+              return;
+            }
+
             set({ user: data.user });
             
             // Wait for the trigger to create the profile
@@ -204,17 +218,19 @@ export const useAuthStore = create<AuthState>()(
             .from('profiles')
             .select('*')
             .eq('id', user.id)
-            .single();
+            .maybeSingle(); // Changed from .single() to .maybeSingle()
 
           if (error) {
-            if (error.code === 'PGRST116') {
-              console.log('Profile not found for user:', user.id);
-              return;
-            }
-            throw error;
+            console.error('Error fetching profile:', error);
+            return;
           }
 
-          set({ profile: data });
+          if (data) {
+            set({ profile: data });
+          } else {
+            console.log('No profile found for user:', user.id);
+            // Profile doesn't exist yet, this is okay
+          }
         } catch (error: any) {
           console.error('Error fetching profile:', error);
         }
