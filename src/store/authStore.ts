@@ -54,9 +54,6 @@ export const useAuthStore = create<AuthState>()(
             if (error.message.includes('Invalid login credentials')) {
               throw new Error('Invalid email or password. Please check your credentials.');
             }
-            if (error.message.includes('Email not confirmed')) {
-              throw new Error('Please check your email and click the confirmation link to verify your account before signing in.');
-            }
             throw new Error(error.message);
           }
 
@@ -92,11 +89,12 @@ export const useAuthStore = create<AuthState>()(
             throw new Error('Password must be at least 6 characters');
           }
 
+          // Sign up without email confirmation
           const { data, error } = await supabase.auth.signUp({
             email: email.trim().toLowerCase(),
             password,
             options: {
-              emailRedirectTo: window.location.origin,
+              emailRedirectTo: undefined, // Remove email redirect
             },
           });
 
@@ -111,17 +109,7 @@ export const useAuthStore = create<AuthState>()(
           }
 
           if (data.user) {
-            // Check if email confirmation is required
-            if (!data.session) {
-              set({ 
-                isLoading: false,
-                error: null 
-              });
-              // Show success message for email confirmation
-              alert('Account created successfully! Please check your email and click the confirmation link to verify your account before signing in.');
-              return;
-            }
-
+            // Directly set the user and session
             set({ user: data.user });
             
             // Wait for the trigger to create the profile
